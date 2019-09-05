@@ -1,18 +1,23 @@
 package ru.genbach.soundcalc;
 
+import java.util.ArrayList;
+
 public class MyCalc {
     private int len_vir;    //  хранит длину последней переданной строки с выражением
     private float rez;      //  хранит последний рассчитанный результат
     private char[] oper = {'/', '*', '-', '+', '='};    //  массив операций которые есть в канкуляторе
 
-    public int getPosOper(String virStr){      //  вернёт позицию первого операнда что будет найден, должен быть приватным
+    public ArrayList getPosOper(String virStr){      //  вернёт позицию первого операнда что будет найден, должен быть приватным
         char ch;
+        ArrayList arrOper = new ArrayList();        //  массив с номерами позиций в которых находяться операнды
+
         for (int i = 0; i < virStr.length(); i++) {
             ch = virStr.charAt(i);
             if (!Character.isDigit(ch)) {       //  Если найдено первое вхождение операнда, то
-                return i;                       //  вернуть его позицию в строке.
+                arrOper.add(i);                       //  занести его позицию в список
             }
         }
+        return arrOper;
     }
 
     public float toCalc(String virStr) {
