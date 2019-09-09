@@ -12,19 +12,22 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import javax.script.ScriptException;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private TextView textView1, textView2;
     private Button iBCE, iBdelit, iBmnojit, iBbackspace, iB0, iB1, iB2, iB3, iB4, iB5, iB6, iB7, iB8, iB9;
     private Button iBminus, iBplus, iBtochka, iBinvertirovat, iBravno;
     final int MAX_SYMBOL = 10;                  // не более этого количества цифр
     private static final String TAG = "SoundCalc";
+    MyCalc myCalc;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        myCalc = new MyCalc();                                      //  Экземпляр класса для расчёта
         textView1 = (TextView) findViewById(R.id.textView1);
         textView2 = (TextView) findViewById(R.id.textView2);
         iBCE = (Button)findViewById(R.id.iBCE);
@@ -118,6 +121,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         iBravno.setBackground(d);
     }
 
+    private void showMess(String mess){
+        Toast.makeText(MainActivity.this, mess, Toast.LENGTH_SHORT).show();
+    }
+
     public boolean proverka(TextView e){    //  Если в текстовом поле меньше MAX_SYMBOL цифр подряд, то возвращ. true иначе false
         String s;                           //  строка
         int m, digit_m = 0;
@@ -134,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (digit_m == MAX_SYMBOL){ //  счётчик чисел идущих подряд достиг предела!
                         rez = false;
                         m = 1;
-                        Toast.makeText(MainActivity.this, "Превышено максимальное число [" + MAX_SYMBOL + "] цифр", Toast.LENGTH_LONG).show();
+                        showMess("Превышено максимальное число [" + MAX_SYMBOL + "] цифр");
                     }
                 }else {                         //  если символ, то
                     digit_m = 0;                //  обнуляем счётчик чисел идущих подряд
@@ -173,6 +180,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             s = s + ch;                                                         //  добавляем в конец строки
         }
         textView1.setText(s);
+
     }
     
     public boolean kontrolZero(TextView e){                     //  Чтобы ноль не размножался! Вставлять до добавления ещё одного нуля.
@@ -269,6 +277,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
         optimizStr(textView1);
+        String s = textView1.getText().toString();
+        switch(myCalc.isGood(s)){
+            case 0:
+                try {
+                    textView2.setText(myCalc.toCalc(s));
+                } catch (ScriptException e) {
+                    Log.d(TAG,"Ошибка в textView2.setText(myCalc.toCalc(s));", e);
+                }
+                break;
+            case 2:
+                showMess("Деление на 0 недопустимая операция! Продолжайте вводить цифры отличные от нуля.");
+        }
     }
     
     public void clickBackspace(View view){  // Обработчик кнопки удаления последнего введённого символа
