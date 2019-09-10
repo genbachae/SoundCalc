@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button iBCE, iBdelit, iBmnojit, iBbackspace, iB0, iB1, iB2, iB3, iB4, iB5, iB6, iB7, iB8, iB9;
     private Button iBminus, iBplus, iBtochka, iBinvertirovat, iBravno;
     final int MAX_SYMBOL = 10;                  // не более этого количества цифр
+    final int MAX_FULL = 300;                   //  Общее количество символов не должно превышать это кол.-во
     private static final String TAG = "SoundCalc";
     MyCalc myCalc;
 
@@ -134,6 +135,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {                                   //  начало блока отслеживания ошибок
             s = e.getText().toString();
             m = s.length();                     //  кол.-во символов в строке
+            if(MAX_FULL <= s.length()){
+                showMess("Превышено максимальное число [" + MAX_FULL + "] введённых символов");
+                return false;
+            }
             while(m > 0){
                 c = s.charAt(m-1);
                 if (Character.isDigit(c)) {     //  если число, то
@@ -280,14 +285,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String s = textView1.getText().toString();
         switch(myCalc.isGood(s)){
             case 0:
+   //             try {
                 try {
                     textView2.setText(myCalc.toCalc(s));
                 } catch (ScriptException e) {
-                    Log.d(TAG,"Ошибка в textView2.setText(myCalc.toCalc(s));", e);
+                    e.printStackTrace();
                 }
+/*                } catch (ScriptException e) {
+                    Log.d(TAG,"Ошибка в textView2.setText(myCalc.toCalc(s));", e);
+                }*/
                 break;
             case 2:
                 showMess("Деление на 0 недопустимая операция! Продолжайте вводить цифры отличные от нуля.");
+                break;
         }
     }
     
