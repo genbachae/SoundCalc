@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">SoundCalc</string>
+    <string name="max11">Maximum total exceeded [</string>
+    <string name="max12">] entered characters</string>
+    <string name="max21">Maximum number exceeded [</string>
+    <string name="max22">] numbers</string>
+    <string name="s_err">error</string>
+    <string name="str1">thousand</string>
+    <string name="str2"> million </string>
+    <string name="str3"> billion </string>
+    <string name="str4"> trillion </string>
+    <string name="str5"> quadrillion </string>
+    <string name="str6"> quintl. </string>
+    <string name="str7"> sextl </string>
+    <string name="str8"> septiln. </string>
+    <string name="str9"> octal. </string>
+    <string name="str10"> nonnal. </string>
+    <string name="str11"> decal </string>
+    <string name="str12"> endecl. </string>
+    <string name="str13"> dodecally. </string>
 </resources>

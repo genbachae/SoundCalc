@@ -15,15 +15,14 @@
             android:id="@+id/textView1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="30dp"
             android:gravity="right"
-            android:text="операции" />
+            android:textSize="28sp" />
 
         <TextView
             android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="30dp"
+            android:textSize="28sp"
             android:gravity="right"
             android:text="результат" />
     </LinearLayout>
@@ -216,6 +215,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:textSize="35sp"
+                    android:onClick="clickInvert"
                     android:text="+/-" />
             </LinearLayout>
 

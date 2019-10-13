@@ -1,9 +1,9 @@
 package ru.genbach.soundcalc;
 
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,25 +12,38 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import javax.script.ScriptException;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SoundPool.OnLoadCompleteListener {
     private TextView textView1, textView2;
     private Button iBCE, iBdelit, iBmnojit, iBbackspace, iB0, iB1, iB2, iB3, iB4, iB5, iB6, iB7, iB8, iB9;
     private Button iBminus, iBplus, iBtochka, iBinvertirovat, iBravno;
+    Resources res;
     final int MAX_SYMBOL = 10;                  // не более этого количества цифр
-    final int MAX_FULL = 300;                   //  Общее количество символов не должно превышать это кол.-во
+    final int MAX_FULL = 90;                   //  Общее количество символов не должно превышать это кол.-во
     private static final String TAG = "SoundCalc";
     MyCalc myCalc;
+    SoundPool sp;                               //  Для звуков
+    int[] arrSoundId = new int[10];             //  Для идентификаторов звуков
+    final int MAX_STREAMS = 5;                  //  Максимальное кол.-во играемых звуков
+
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        myCalc = new MyCalc();                                      //  Экземпляр класса для расчёта
+        initSound();
+        res = getResources();
+        myCalc = new MyCalc(getResources());                                      //  Экземпляр класса для расчёта
         textView1 = (TextView) findViewById(R.id.textView1);
         textView2 = (TextView) findViewById(R.id.textView2);
+        setZero();
         iBCE = (Button)findViewById(R.id.iBCE);
         iBdelit = (Button)findViewById(R.id.iBdelit);
         iBmnojit = (Button)findViewById(R.id.iBmnojit);
@@ -65,13 +78,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         iBminus.setOnClickListener(this);                       //  Обработкой нажатия занимается этот класс
         iBplus.setOnClickListener(this);                        //  Обработкой нажатия занимается этот класс
         iBtochka.setOnClickListener(this);                      //  Обработкой нажатия занимается этот класс
-        iBinvertirovat.setOnClickListener(this);                //  Обработкой нажатия занимается этот класс
         iBravno.setOnClickListener(this);                       //  Обработкой нажатия занимается этот класс
         iBdelit.setOnClickListener(this);                       //  Обработкой нажатия занимается этот класс
         iBmnojit.setOnClickListener(this);                      //  Обработкой нажатия занимается этот класс
-
         setColorButtons();
     }
+
+    void initSound(){
+        sp = new SoundPool(MAX_STREAMS, AudioManager.STREAM_MUSIC, 0);
+        sp.setOnLoadCompleteListener(this);
+
+        arrSoundId[0] = sp.load(MainActivity.this, R.raw.zero, 1);
+        arrSoundId[1] = sp.load(MainActivity.this, R.raw.one, 1);
+        arrSoundId[2] = sp.load(MainActivity.this, R.raw.two, 1);
+        arrSoundId[3] = sp.load(MainActivity.this, R.raw.three, 1);
+        arrSoundId[4] = sp.load(MainActivity.this, R.raw.four, 1);
+        arrSoundId[5] = sp.load(MainActivity.this, R.raw.five, 1);
+        arrSoundId[6] = sp.load(MainActivity.this, R.raw.six, 1);
+        arrSoundId[7] = sp.load(MainActivity.this, R.raw.seven, 1);
+        arrSoundId[8] = sp.load(MainActivity.this, R.raw.eight, 1);
+        arrSoundId[9] = sp.load(MainActivity.this, R.raw.nine, 1);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {      //  Сохраняем данные до поворота
+        outState.putString("KEY1",textView1.getText().toString());
+        outState.putString("KEY2",textView2.getText().toString());
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {     //  Восстанавливаем данные после поворота
+        super.onRestoreInstanceState(savedInstanceState);
+        textView1.setText((String)savedInstanceState.get("KEY1"));
+        textView2.setText((String)savedInstanceState.get("KEY2"));
+    }
+
+    @Override
+    public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+        Log.d(TAG, "onLoadComplete, sampleId = " + sampleId + ", status = " + status);
+    }
+
 
     public void optimizStr(TextView e){                         //  Оптимизировать строку(Преобразовывать "012.." в "12..")
         String s, s2;
@@ -96,7 +143,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         }
-    }    
+    }
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void setColorButtons(){ //  Установить чёрный цвета фона всем кнопкам
@@ -128,30 +177,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public boolean proverka(TextView e){    //  Если в текстовом поле меньше MAX_SYMBOL цифр подряд, то возвращ. true иначе false
         String s;                           //  строка
-        int m, digit_m = 0;
+        int m, i = 0, digit_m = 0;              //  i - для подсчёта итераций!
         char c;                             //  символ из строки
         boolean rez = true;
 
         try {                                   //  начало блока отслеживания ошибок
             s = e.getText().toString();
             m = s.length();                     //  кол.-во символов в строке
-            if(MAX_FULL <= s.length()){
-                showMess("Превышено максимальное число [" + MAX_FULL + "] введённых символов");
+/*            if(m == MAX_SYMBOL){
+                i = 0;
+            }*/
+            if(MAX_FULL <= m){
+                //showMess("Превышено максимальное общее число [" + MAX_FULL + "] введённых символов");
+                showMess(res.getString(R.string.max11) + MAX_FULL + res.getString(R.string.max12));
                 return false;
             }
-            while(m > 0){
+            while(m > 0 & i < MAX_SYMBOL){
                 c = s.charAt(m-1);
                 if (Character.isDigit(c)) {     //  если число, то
                     digit_m++;                  //  подсчитываем количество цифр идущих подряд
                     if (digit_m == MAX_SYMBOL){ //  счётчик чисел идущих подряд достиг предела!
                         rez = false;
                         m = 1;
-                        showMess("Превышено максимальное число [" + MAX_SYMBOL + "] цифр");
+                        //  showMess("Превышено максимальное число [" + MAX_SYMBOL + "] цифр");
+                        showMess(res.getString(R.string.max21) + MAX_SYMBOL + res.getString(R.string.max22));
                     }
                 }else {                         //  если символ, то
                     digit_m = 0;                //  обнуляем счётчик чисел идущих подряд
+
                 }
                 m--;                            //  переходим к следующему символу
+                i++;
             }
         } catch (Exception e1) {
             Log.d(TAG,"Ошибка в функции proverka(textView e)", e1);
@@ -174,25 +230,83 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         char pos;                               //  Последний символ
         int m;
         s = textView1.getText().toString();
+        int posOp = getPosOper(s);              //  Получаем позицию последнего оператора
+        int posTchk = s.lastIndexOf('.');   //  Позиция последней точки
+        int posZap = s.lastIndexOf(',');    //  позиция последней запятой
         m = s.length();                         //  Кол.-во символов.
         pos = s.charAt(m - 1);                    //  Получить последний символ из строки
         if ((pos == '-' & m == 1) | m == 0) {   //  Если единственный символ минус или нет символов то выходим из процедуры
             return;
         }
-        if (pos == '/' | pos == '*' | pos == '-' | pos == '+' | pos == '=' | pos == '.') {    //  если ранее был уже введён символ операции или точки, то
-            s = s.substring(0, m - 1) + ch;                                     //  меняем его в строке
+
+/*        if (Character.isDigit(pos)){                            //  если последний символ это число
+            if(!Character.isDigit(ch)){                         //  хотят добавить НЕ число
+                if(posOp > posTchk & posOp > posZap | posOp == -1) {
+                    s = s + ch;
+                } else {
+                    showMess("Точка/Запятая уже есть!");
+                }
+            }
+        } else {                                                //  последний символ НЕ число
+            if(!Character.isDigit(ch)){                         //  хотят добавить НЕ число
+                if(posOp > posTchk & posOp > posZap | posOp == -1) {
+                    s = s.substring(0, m - 1) + ch;                 //  меняем его в строке
+                } else {
+                    showMess("Точка/Запятая уже есть!");
+                }
+            }
+        }*/
+//      Останов!!!
+
+        if (pos == '/' | pos == '*' | pos == '-' | pos == '+' | pos == '=' | pos == '.') {     //  если ранее был уже введён символ операции или точки, то
+            if(ch != '.') {                                                                     //  знак операции не меняем на точку!
+                s = s.substring(0, m - 1) + ch;                                                 //  меняем его в строке
+            }
         } else {                                                                //  если нет символа операции или точки, то
-            s = s + ch;                                                         //  добавляем в конец строки
+            if((s.indexOf(".") != -1 & ch == '.') | (s.indexOf(",") != -1 & ch == '.')) {                  //  если хочет добавить ещё одну точку/запятую, то
+                if(posOp > posTchk & posOp > posZap | (posOp == -1 & posTchk == -1 & posZap == -1)) {
+                    s = s + ch;
+                }
+            }else {                                                             //  если хочет добавить что-то другое, то
+                s = s + ch;
+            }
         }
+
         textView1.setText(s);
 
     }
+    private void calcMy(String s){
+        switch(myCalc.isGood(s)){
+            case 0:
+                textView2.setText(myCalc.toCalc(s));
+                break;
+            case 1:
+                s = s.substring(0,s.length()-1);            //  Отбрасываем знак операции в конце строки
+                textView2.setText(myCalc.toCalc(s));
+                break;
+            case 2:
+                //  showMess("Деление на 0 недопустимая операция! Продолжайте вводить цифры отличные от нуля.");
+                s = getString(R.string.s_err);
+                textView2.setText(s);
+                //  Log.d(TAG,"Попытка деления на 0. Результат = ꝏ");
+                break;
+            case 3:
+                s = s.substring(0,s.length()-1);            //  Отбрасываем знак '=' в конце строки
+                s = myCalc.toCalc(s);
+                textView2.setText(s);
+                textView1.setText(myCalc.removeProb(s));       //  перед присваиванием выбросить все пробелы и размерности!!!
+                //  protectV = true;                                //  установить запрет на ввод чисел
+                break;
+        }
+    }
     
-    public boolean kontrolZero(TextView e){                     //  Чтобы ноль не размножался! Вставлять до добавления ещё одного нуля.
+    private boolean kontrolZero(TextView e){                     //  Чтобы ноль не размножался! Вставлять до добавления ещё одного нуля.
         String s;
         boolean rez = true;                                     //  По умолчанию ввод '0' разрешён
         int m;                                                  //  Для длины строки
         char ch, ch2;
+        boolean b_zero = false;                                 //  По умолчанию считать кол.-во нулей после точки не нужно
+        int i_zero = 0;                                         //  Для подсчёта кол.-ва нулей
 
         try {
             s = e.getText().toString();
@@ -207,10 +321,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ch = s.charAt(m-1);                              //  последний символ
                     ch2 = s.charAt(m-2);                             //  предпоследний символ
                     if (ch == '0'){                                             //  если последний символ ноль
-                        if (ch2 == '+' | ch2 == '-' | ch2 == '/' | ch2 == '*'){  //  а предпоследний это символ операции, то
+                        i_zero++;
+                        if (ch2 == '+' | ch2 == '-' | ch2 == '/' | ch2 == '*' | i_zero == MAX_SYMBOL-1){  //  а предпоследний это символ операции или введено уже много 0 после точки, то
                             rez = false;                              //  устанавливаем запрет на добавление ещё одного нуля
                             break;                                    //  выйти  из цикла
                         }
+                    }else if(ch == '.' | Character.isDigit(ch)){      //    если точка или число, то
+                        rez = true;                                   //    разрешаем ввод нулей
+                        break;
                     }
                     m--;                                             // смещаемся в начало строки
                 }
@@ -221,84 +339,91 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return rez;
     }
 
+    void getSound(int id){                                          //  Проигрывает звук по полученному индексу
+        sp.play(arrSoundId[id], 1, 1, 1, 0, 1);
+    }
+
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.iB0:
-/*                String s;
-                s =  textView1.getText().toString();*/
                 if (kontrolZero(textView1)){                    //  Нельзя вводить больше одного нуля
                     clickNum('0');
+                    getSound(0);
                 }
                 break;
             case R.id.iB1:
                 clickNum('1');
-
+                getSound(1);
                 break;
             case R.id.iB2:
                 clickNum('2');
-
+                getSound(2);
                 break;
             case R.id.iB3:
                 clickNum('3');
-
+                getSound(3);
                 break;
             case R.id.iB4:
                 clickNum('4');
-
+                getSound(4);
                 break;
             case R.id.iB5:
                 clickNum('5');
+                getSound(5);
                 break;
             case R.id.iB6:
                 clickNum('6');
+                getSound(6);
                 break;
             case R.id.iB7:
                 clickNum('7');
+                getSound(7);
                 break;
             case R.id.iB8:
                 clickNum('8');
+                getSound(8);
                 break;
             case R.id.iB9:
                 clickNum('9');
+                getSound(9);
                 break;
             case R.id.iBdelit:
                 clickOper('/');
+                
                 break;
             case R.id.iBmnojit:
                 clickOper('*');
+                
                 break;
             case R.id.iBplus:
                 clickOper('+');
+                
                 break;
             case R.id.iBminus:
                 clickOper('-');
+                
                 break;
             case R.id.iBtochka:
                 clickOper('.');
                 break;
             case R.id.iBravno:
-                clickOper('=');
+                String s = getString(R.string.s_err);
+                String s2 = textView2.getText().toString();
+                if(!s.equalsIgnoreCase(s2)) {          //  Если ошибки нет, то
+                    clickOper('=');
+                }
                 break;
         }
         optimizStr(textView1);
+        //  Начало блока рассчитывающего выражение
         String s = textView1.getText().toString();
-        switch(myCalc.isGood(s)){
-            case 0:
-   //             try {
-                try {
-                    textView2.setText(myCalc.toCalc(s));
-                } catch (ScriptException e) {
-                    e.printStackTrace();
-                }
-/*                } catch (ScriptException e) {
-                    Log.d(TAG,"Ошибка в textView2.setText(myCalc.toCalc(s));", e);
-                }*/
-                break;
-            case 2:
-                showMess("Деление на 0 недопустимая операция! Продолжайте вводить цифры отличные от нуля.");
-                break;
-        }
+        calcMy(s);
+        //  Конец блока рассчитывающего выражение
+    }
+    private void setZero(){
+        textView1.setText("0");
+        textView2.setText("0");
     }
     
     public void clickBackspace(View view){  // Обработчик кнопки удаления последнего введённого символа
@@ -307,17 +432,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {                               // Начало блока обработки ошибок
             s = textView1.getText().toString();
             m = s.length();
-            if (m > 0){                     // Если набрано хотя-бы одно число, то
+            if (m > 1){                     // Если набрано хотя-бы два числа, то
                 s = s.substring(0,m-1);     // Вырезать символы начиная с 0 и до предпоследнего
-                textView1.setText(s);       // Присвоить эдиту
+                textView1.setText(s);       // Присвоить
+                calcMy(s);                  //  Пересчёт арифметич. выражения
             } else {                        // Если одно число и менее, то
-                switch (m) {
-                    case 0:
-                        break;
-                    case 1:
-                        s = "";
-                        break;
-                }
+                setZero();
             }                               // Конец блока обработки ошибок
         } catch (Exception e) {
             Log.d(TAG,"Ошибка в кнопке clickBackspace",e);
@@ -325,6 +445,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void clickCE(View view){
-        textView1.setText("");
+        setZero();
+    }
+
+    public int getPosOper(String s){            //  Возвратит индекс последнего введенного символа операции
+        ArrayList<Integer> pos = new ArrayList<>();
+        pos.add(s.lastIndexOf("+"));
+        pos.add(s.lastIndexOf("*"));
+        pos.add(s.lastIndexOf("-"));
+        pos.add(s.lastIndexOf("/"));
+        int p = Collections.max(pos);
+        return p;
+    }
+
+    private int findRaz(String s){              //  Находит и возвращает позицию разделителя в строке s
+        int p = s.indexOf('.');
+        if (p == -1){
+            p = s.indexOf(',');
+        }
+        return p;
+    }
+
+    public void clickInvert(View view){    //   обработчик кнопки "+/-"
+        String s = textView1.getText().toString();
+        s = s.replace(',','.');
+        char ch = s.charAt(s.length()-1);
+        int p = getPosOper(s);
+        if(p == -1 | p == 0){                    //  символов операций в строке небыло
+            if(findRaz(s) > -1) {
+                double v = Double.parseDouble(s);
+                v *= -1.0;
+                s = Double.toString(v);
+                char ch2 = s.charAt(s.length()-1);
+                if(ch == ch2) {                 //  если в результате смены знака последний символ не изменился, то
+                    textView1.setText(s);
+                }else{                          //  если изменился, то
+                    textView1.setText(s.substring(0,s.length()-2));
+                }
+            } else {                            //  в s число типа int
+                int v = Integer.parseInt(s);
+                v *= -1;
+                s = Integer.toString(v);
+                textView1.setText(s);
+            }
+        }                               //  последний символ операции в строке неразумно менять на знак!
     }
 }

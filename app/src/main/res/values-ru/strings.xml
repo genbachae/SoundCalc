@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">SoundCalc</string>
+    <string name="max11">Превышено максимальное общее число [</string>
+    <string name="max12">] введённых символов</string>
+    <string name="max21">Превышено максимальное число [</string>
+    <string name="s_err">ошибка</string>
+    <string name="max22">] цифр</string>
+    <string name="str1"> тыс. </string>
+    <string name="str2"> милн. </string>
+    <string name="str3"> милрд. </string>
+    <string name="str4"> трилн. </string>
+    <string name="str5"> квадрлн. </string>
+    <string name="str6"> квинтлн. </string>
+    <string name="str7"> секстлн. </string>
+    <string name="str8"> септилн. </string>
+    <string name="str9"> октальн. </string>
+    <string name="str10"> нональн. </string>
+    <string name="str11"> декальн. </string>
+    <string name="str12"> эндекльн. </string>
+    <string name="str13"> додекальн. </string>
+</resources>
