@@ -342,6 +342,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     void getSound(int id){                                          //  Проигрывает звук по полученному индексу
         sp.play(arrSoundId[id], 1, 1, 1, 0, 1);
     }
+    boolean errNot(){
+        String s = getString(R.string.s_err);
+        String s2 = textView2.getText().toString();
+        if(!s.equalsIgnoreCase(s2)) {          //  Если ошибки нет, то
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     @Override
     public void onClick(View view) {
@@ -389,28 +398,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 getSound(9);
                 break;
             case R.id.iBdelit:
-                clickOper('/');
-                
+                if(errNot()) {                       //  Если ошибки нет, то
+                    clickOper('/');
+                }
                 break;
             case R.id.iBmnojit:
-                clickOper('*');
-                
+                if(errNot()) {                       //  Если ошибки нет, то
+                    clickOper('*');
+                }
                 break;
             case R.id.iBplus:
-                clickOper('+');
-                
+                if(errNot()) {                       //  Если ошибки нет, то
+                    clickOper('+');
+                }
                 break;
             case R.id.iBminus:
-                clickOper('-');
-                
+                if(errNot()) {                       //  Если ошибки нет, то
+                    clickOper('-');
+                }
                 break;
             case R.id.iBtochka:
                 clickOper('.');
                 break;
             case R.id.iBravno:
-                String s = getString(R.string.s_err);
-                String s2 = textView2.getText().toString();
-                if(!s.equalsIgnoreCase(s2)) {          //  Если ошибки нет, то
+                if(errNot()) {                       //  Если ошибки нет, то
                     clickOper('=');
                 }
                 break;
